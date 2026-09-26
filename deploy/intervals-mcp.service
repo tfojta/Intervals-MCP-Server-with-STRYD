@@ -1,0 +1,38 @@
+# systemd unit template: run the MCP server in Streamable HTTP mode, started at boot.
+#
+# Installed as a *user* service (no root needed). Replace /home/you/Intervals-MCP-Server-with-STRYD
+# with the absolute path to your clone and /usr/bin/node with the output of `command -v node`
+# (nvm/fnm installs live under your home directory), then:
+#
+#   npm run build
+#   mkdir -p ~/.config/systemd/user
+#   cp deploy/intervals-mcp.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now intervals-mcp
+#   loginctl enable-linger "$USER"      # start at boot without a login session (may need sudo)
+#   curl http://127.0.0.1:8080/health
+#
+# Logs: journalctl --user -u intervals-mcp -f
+# After pulling new code: npm run build && systemctl --user restart intervals-mcp
+#
+# HTTP mode has NO authentication and binds to 0.0.0.0 — keep the port on a trusted
+# network / VPN only. See SECURITY.md.
+
+[Unit]
+Description=Intervals.icu MCP server (Stryd) - Streamable HTTP
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/you/Intervals-MCP-Server-with-STRYD
+# Credentials and optional settings come from .env. Variables set here win over .env
+# (node --env-file never overrides existing environment variables), so HTTP mode is
+# forced even if .env says otherwise. MCP_PORT defaults to 8080.
+Environment=MCP_TRANSPORT=http
+ExecStart=/usr/bin/node --env-file=/home/you/Intervals-MCP-Server-with-STRYD/.env /home/you/Intervals-MCP-Server-with-STRYD/build/index.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

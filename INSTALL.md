@@ -265,10 +265,24 @@ Claude Desktop does not connect to HTTP MCP servers directly; bridge it with
 }
 ```
 
-To keep it running 24/7 on a server, run it under a process manager such as
-`systemd` (a `simple` service that runs `node build/index.js` with
-`Environment=MCP_TRANSPORT=http` and an `EnvironmentFile` pointing at your `.env`),
-or use Docker (below).
+To keep it running 24/7 on a server, run it under `systemd` or use Docker (below).
+A ready-made user-service template is in
+[`deploy/intervals-mcp.service`](deploy/intervals-mcp.service): replace the
+`/home/you/...` paths with your clone's absolute path, then
+
+```bash
+npm run build
+mkdir -p ~/.config/systemd/user
+cp deploy/intervals-mcp.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now intervals-mcp
+loginctl enable-linger "$USER"   # start at boot without logging in (may need sudo)
+curl http://127.0.0.1:8080/health
+```
+
+The unit loads your `.env` via `node --env-file` and forces `MCP_TRANSPORT=http`.
+Logs: `journalctl --user -u intervals-mcp -f`. After pulling new code, run
+`npm run build && systemctl --user restart intervals-mcp`.
 
 ### Run with Docker (HTTP mode)
 

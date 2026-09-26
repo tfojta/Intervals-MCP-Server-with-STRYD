@@ -259,9 +259,23 @@ HTTPS でないため `--allow-http` が必要です:
 }
 ```
 
-サーバ上で 24/7 稼働させ続けるには、`systemd` のようなプロセスマネージャの下で実行します
-（`node build/index.js` を `Environment=MCP_TRANSPORT=http` と、`.env` を指す `EnvironmentFile`
-付きで実行する `simple` サービス）。または下記の Docker を使います。
+サーバ上で 24/7 稼働させ続けるには、`systemd` の下で実行するか、下記の Docker を使います。
+ユーザーサービスのテンプレートを [`deploy/intervals-mcp.service`](deploy/intervals-mcp.service)
+に用意しています。`/home/you/...` のパスを clone 先の絶対パスに置き換えてから:
+
+```bash
+npm run build
+mkdir -p ~/.config/systemd/user
+cp deploy/intervals-mcp.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now intervals-mcp
+loginctl enable-linger "$USER"   # ログインなしで起動時に開始（sudo が必要な場合あり）
+curl http://127.0.0.1:8080/health
+```
+
+このユニットは `node --env-file` で `.env` を読み込み、`MCP_TRANSPORT=http` を強制します。
+ログ: `journalctl --user -u intervals-mcp -f`。コード更新後は
+`npm run build && systemctl --user restart intervals-mcp` を実行します。
 
 ### Docker で実行（HTTP モード）
 
