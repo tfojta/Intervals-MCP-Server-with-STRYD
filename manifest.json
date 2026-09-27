@@ -195,6 +195,18 @@
       "description": "Turn the on-disk stream cache on or off at runtime, or query its current state."
     },
     {
+      "name": "get_activity_best_efforts",
+      "description": "Best times over fixed distances (400 m to marathon) within one activity, as shown in the Intervals.icu Pace tab \"Best efforts\"."
+    },
+    {
+      "name": "get_best_efforts_bulk",
+      "description": "Best time over one distance for every activity in a date range, sorted fastest first."
+    },
+    {
+      "name": "get_athlete_best_efforts",
+      "description": "The athlete's ranked best efforts over one distance for a period (all time, season, 42d, …), as on the Intervals.icu Best Efforts page."
+    },
+    {
       "name": "get_current_pmc",
       "description": "Get today's Performance Management Chart (PMC) values."
     },

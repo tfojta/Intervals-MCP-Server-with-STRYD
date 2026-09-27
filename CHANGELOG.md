@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Pace best-effort tools** (read-only, GET only) returning the same numbers as the
+  website's Pace tab "Best efforts" and Best Efforts page:
+  `get_activity_best_efforts` (standard distances within one activity, from
+  `/activity/{id}/pace-curve.json`), `get_best_efforts_bulk` (one distance for every
+  activity in a date range, fastest first, fetched in calendar-year chunks from
+  `/athlete/{id}/activity-pace-curves.json`), and `get_athlete_best_efforts` (ranked list
+  for `all` / `season` / `<N>d` / `<N>y` / a date range; the window comes from
+  `/athlete/{id}/pace-curves.json`, and the ranking is cross-checked against it). No
+  interpolation: distances off the Intervals.icu ladder are rounded up to the next ladder
+  distance, as the website does. `gap=true` for grade-adjusted pace.
+- **HTTP 429 backoff** for these calls: Retry-After when given, otherwise 5 s / 10 s /
+  20 s, up to 3 retries (abortable).
+- **systemd user-service template** (`deploy/intervals-mcp.service`) for HTTP mode.
+
 ## [0.12.1] — 2026-07-03
 
 ### Documentation

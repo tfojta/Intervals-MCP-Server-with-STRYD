@@ -151,6 +151,35 @@ async function get<T>(path: string, params?: Record<string, string>, options?: R
   return request<T>(path, { params, ...options });
 }
 
+/** Retries of a 429 in getWithRateLimitRetry before the error is surfaced. */
+const RATE_LIMIT_MAX_RETRIES = 3;
+/** Upper bound on one backoff wait (also caps a large Retry-After). */
+const RATE_LIMIT_MAX_WAIT_SEC = 60;
+
+/**
+ * GET that retries HTTP 429 with backoff: waits Retry-After when given, otherwise
+ * 5s, 10s, 20s (each capped at 60s), up to 3 retries. The wait is abortable via
+ * options.signal. Used by the bulk pace-curve tools, which issue several requests
+ * per call.
+ */
+async function getWithRateLimitRetry<T>(
+  path: string,
+  params?: Record<string, string>,
+  options?: RequestOptions,
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await get<T>(path, params, options);
+    } catch (err) {
+      if (!(err instanceof IntervalsApiError) || err.status !== 429 || attempt >= RATE_LIMIT_MAX_RETRIES) {
+        throw err;
+      }
+      const waitSec = Math.min(err.retryAfterSeconds ?? 5 * 2 ** attempt, RATE_LIMIT_MAX_WAIT_SEC);
+      await delay(waitSec * 1000, options?.signal);
+    }
+  }
+}
+
 export const intervalsClient = {
   getActivities(oldest: string, newest: string, options?: RequestOptions): Promise<unknown[]> {
     return get<unknown[]>(`/athlete/${config_.athleteId}/activities`, {
@@ -327,5 +356,72 @@ export const intervalsClient = {
     cacheSet(activityId, fetchTypes, streams).catch(() => {});
 
     return streams;
+  },
+
+  /**
+   * GET /activity/{id}/pace-curve.json?gap= — best time at each ladder distance
+   * (`distance[]` / `values[]` in seconds) for one activity.
+   */
+  getActivityPaceCurve(activityId: string, gap: boolean, options?: RequestOptions): Promise<unknown> {
+    return getWithRateLimitRetry<unknown>(`/activity/${activityId}/pace-curve.json`, {
+      gap: String(gap),
+    }, options);
+  },
+
+  /**
+   * GET /athlete/{id}/activity-pace-curves.json — per-activity best times at the
+   * requested distances for every matching activity in [oldest, newest] (inclusive).
+   * Response: { distances: [ladder distances used], gap, curves: [{ id,
+   * start_date_local, secs: [...] }] }; `secs` is truncated where a run was shorter.
+   */
+  getActivityPaceCurves(
+    oldest: string,
+    newest: string,
+    type: string,
+    distances: number[],
+    gap: boolean,
+    options?: RequestOptions,
+  ): Promise<unknown> {
+    return getWithRateLimitRetry<unknown>(`/athlete/${config_.athleteId}/activity-pace-curves.json`, {
+      oldest,
+      newest,
+      type,
+      distances: distances.join(","),
+      gap: String(gap),
+    }, options);
+  },
+
+  /**
+   * GET /athlete/{id}/pace-curves.json — the athlete's best pace curves (the
+   * website's Best Efforts / pace-curve chart). `curves` ids: "42d", "1y", "s0"
+   * (this season), "all", "r.YYYY-MM-DD.YYYY-MM-DD". Unknown ids are silently
+   * dropped by the API. Response: { list: [{ id, label, start_date_local,
+   * end_date_local, distance[], values[], activity_id[] }], activities: {id: {...}} }.
+   */
+  getAthletePaceCurves(
+    curves: string[],
+    newest: string,
+    type: string,
+    gap: boolean,
+    options?: RequestOptions,
+  ): Promise<unknown> {
+    return getWithRateLimitRetry<unknown>(`/athlete/${config_.athleteId}/pace-curves.json`, {
+      curves: curves.join(","),
+      newest,
+      type,
+      gap: String(gap),
+    }, options);
+  },
+
+  /**
+   * GET /athlete/{id}/activities with a `fields` projection — a lightweight list
+   * (~140 B/activity with id,name,distance,type vs ~5 KB unprojected).
+   */
+  getActivityList(oldest: string, newest: string, fields: string[], options?: RequestOptions): Promise<unknown[]> {
+    return getWithRateLimitRetry<unknown[]>(`/athlete/${config_.athleteId}/activities`, {
+      oldest,
+      newest,
+      fields: fields.join(","),
+    }, options);
   },
 };

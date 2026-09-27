@@ -39,6 +39,19 @@ multi-user service.
   trends, events / planned workouts (read + create / update / delete), athlete
   summaries, and stream-level analysis (splits, cardiac decoupling, grade-adjusted
   pace, custom power/HR zones).
+- **Pace best efforts (read-only).** Best times over fixed distances (400 m, 1 km, 1 mile,
+  5 km, 10 km, …) — the same numbers as the website's Pace tab "Best efforts" and the
+  Best Efforts page:
+  - `get_activity_best_efforts` — every standard distance within one run.
+  - `get_best_efforts_bulk` — one distance for every run in a date range, fastest first
+    (a whole multi-year history in one call; fetched in year-sized chunks).
+  - `get_athlete_best_efforts` — the ranked list for a period (`all`, `season`, `42d`,
+    `1y`, or a date range). `<N>d` windows end on `newest` (inclusive, default today).
+
+  Times come straight from the Intervals.icu pace curve — nothing is interpolated.
+  Intervals.icu stores times at a fixed ladder of distances, and a distance that is not
+  on the ladder is rounded **up** to the next one, as the website does (1609 m → 1609.34 m;
+  the row carries `requested_m`). `gap=true` gives grade-adjusted pace.
 
 The server provides **data and math only**. It does **not** decide how you should
 train — that interpretation comes from a knowledge file *you* write and load into your

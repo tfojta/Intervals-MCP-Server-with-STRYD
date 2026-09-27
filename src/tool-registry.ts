@@ -29,6 +29,9 @@ import { createGearTool } from "./core/tools/create-gear.js";
 import { retireGearTool } from "./core/tools/retire-gear.js";
 import { clearCacheTool } from "./core/tools/clear-cache.js";
 import { setCacheEnabledTool } from "./core/tools/set-cache-enabled.js";
+import { getActivityBestEffortsTool } from "./core/tools/get-activity-best-efforts.js";
+import { getBestEffortsBulkTool } from "./core/tools/get-best-efforts-bulk.js";
+import { getAthleteBestEffortsTool } from "./core/tools/get-athlete-best-efforts.js";
 import { getCurrentPmcTool } from "./extensions/stryd/tools/get-current-pmc.js";
 import { getWeeklySummaryTool } from "./extensions/stryd/tools/get-weekly-summary.js";
 import { getPhaseSummaryTool } from "./extensions/stryd/tools/get-phase-summary.js";
@@ -75,6 +78,9 @@ export const TOOLS: ToolDef[] = [
   retireGearTool,
   clearCacheTool,
   setCacheEnabledTool,
+  getActivityBestEffortsTool,
+  getBestEffortsBulkTool,
+  getAthleteBestEffortsTool,
   // Stryd extensions
   getCurrentPmcTool,
   getWeeklySummaryTool,

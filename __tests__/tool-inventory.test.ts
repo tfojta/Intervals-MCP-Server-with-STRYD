@@ -37,6 +37,9 @@ const EXPECTED_TOOLS: string[] = [
   "retire_gear",
   "clear_cache",
   "set_cache_enabled",
+  "get_activity_best_efforts",
+  "get_best_efforts_bulk",
+  "get_athlete_best_efforts",
   // Stryd extensions
   "get_current_pmc",
   "get_weekly_summary",
@@ -57,7 +60,7 @@ const WRITE_TOOLS = [
 ];
 
 describe("tool inventory (pure registry)", () => {
-  it("TOOLS registry contains exactly the 23 expected tools", () => {
+  it("TOOLS registry contains exactly the 26 expected tools", () => {
     expect(registryNames).toEqual(new Set(EXPECTED_TOOLS));
     expect(TOOLS).toHaveLength(EXPECTED_TOOLS.length);
   });
@@ -75,7 +78,7 @@ describe("tool inventory (pure registry)", () => {
     }
   });
 
-  it("manifest.json tools[] match the registry exactly (full 23, not READ_ONLY-filtered)", () => {
+  it("manifest.json tools[] match the registry exactly (full 26, not READ_ONLY-filtered)", () => {
     // The manifest's tools list is descriptive (tools_generated: false) — guard it
     // against drift the way EXPECTED_TOOLS guards the registry. Compare to TOOLS
     // directly: READ_ONLY filtering is a runtime concern, the manifest advertises
@@ -104,16 +107,16 @@ describe("READ_ONLY mode (getActiveTools)", () => {
     delete process.env.READ_ONLY;
   });
 
-  it("default mode exposes all 23 tools", () => {
+  it("default mode exposes all 26 tools", () => {
     delete process.env.READ_ONLY;
     expect(getActiveTools().map((t) => t.name).sort()).toEqual([...EXPECTED_TOOLS].sort());
-    expect(getActiveTools()).toHaveLength(23);
+    expect(getActiveTools()).toHaveLength(26);
   });
 
-  it("READ_ONLY=true withholds exactly the 8 account-writing tools (15 remain)", () => {
+  it("READ_ONLY=true withholds exactly the 8 account-writing tools (18 remain)", () => {
     process.env.READ_ONLY = "true";
     const names = getActiveTools().map((t) => t.name);
-    expect(getActiveTools()).toHaveLength(15);
+    expect(getActiveTools()).toHaveLength(18);
     for (const w of WRITE_TOOLS) {
       expect(names, `${w} should be withheld in READ_ONLY`).not.toContain(w);
     }

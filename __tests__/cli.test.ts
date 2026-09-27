@@ -37,7 +37,7 @@ describe("cli", () => {
       title: string;
       description: string;
     }>;
-    expect(tools).toHaveLength(23);
+    expect(tools).toHaveLength(26);
     const names = tools.map((t) => t.name);
     expect(names).toContain("get_activities");
     expect(names).toContain("get_current_pmc");
@@ -111,7 +111,7 @@ describe("cli list — credential-free", () => {
     vi.resetModules();
   });
 
-  it("lists all 23 tools with no INTERVALS_* env set", async () => {
+  it("lists all 26 tools with no INTERVALS_* env set", async () => {
     vi.resetModules();
     const saved = { ...process.env };
     try {
@@ -131,7 +131,7 @@ describe("cli list — credential-free", () => {
       expect(code).toBe(0);
       expect(stderr).toBe("");
       const tools = JSON.parse(stdout) as Array<{ name: string }>;
-      expect(tools).toHaveLength(23);
+      expect(tools).toHaveLength(26);
     } finally {
       for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
       Object.assign(process.env, saved);
